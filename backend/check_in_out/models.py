@@ -1,12 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.conf import settings
-from django.contrib.auth.models import User
 
 class Attendance(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    ACTION_CHOICES = [
+        ('check_in', 'Check In'),
+        ('check_out', 'Check Out'),
+    ]
+
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
-    action = models.CharField(max_length=10, choices=[('check-in', 'Check-In'), ('check-out', 'Check-Out')])
 
     def __str__(self):
-        return f"{self.user.username} - {self.action} at {self.timestamps}"
+        return f"{self.employee.name} - {self.action} at {self.timestamp}"
