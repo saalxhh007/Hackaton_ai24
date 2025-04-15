@@ -19,40 +19,46 @@ def get_embeddings(request):
 
     return JsonResponse(data, safe=False)
 
-@csrf_exempt
-@require_http_methods(["GET"])
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+import json
+
+@require_GET
 def get_embedding(request):
+    vector_param = request.GET.get('vector')
+    if not vector_param:
+        return JsonResponse({"error": "Missing 'vector' query parameter."}, status=400)
+
     try:
-        body = json.loads(request.body)
-        query_vector = body.get("vector")
+        # Split the vector string into a list of floats
+        query_vector = [float(x) for x in vector_param.split(',')]
+    except ValueError:
+        return JsonResponse({"error": "Invalid 'vector' format. Ensure it's a comma-separated list of numbers."}, status=400)
 
-        if not isinstance(query_vector, list) or not all(isinstance(x, (int, float)) for x in query_vector):
-            return JsonResponse({"error": "Invalid or missing 'vector' in request body."}, status=400)
+    # Proceed with your logic using query_vector
+    # For example:
+    # search_result = qdrant.search(
+    #     collection_name=collection_name,
+    #     query_vector=query_vector,
+    #     limit=1,
+    #     with_vectors=True
+    # )
 
-        search_result = qdrant.search(
-            collection_name=collection_name,
-            query_vector=query_vector,
-            limit=1,
-            with_vectors=True
-        )
+    # if not search_result:
+    #     return JsonResponse({"message": "No matching embedding found."}, status=404)
 
-        if not search_result:
-            return JsonResponse({"message": "No matching embedding found."}, status=404)
+    # point = search_result[0]
+    # response_data = {
+    #     "id": point.id,
+    #     "score": point.score,
+    #     "vector": point.vector,
+    #     "payload": point.payload
+    # }
 
-        point = search_result[0]
-        response_data = {
-            "id": point.id,
-            "score": point.score,
-            "vector": point.vector,
-            "payload": point.payload
-        }
+    # return JsonResponse(response_data)
 
-        return JsonResponse(response_data)
-
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON in request body."}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    # Placeholder response for demonstration
+    return JsonResponse({"message": "Vector received successfully.", "vector": query_vector})
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
