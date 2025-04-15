@@ -1,0 +1,3 @@
+envy
+*.sqlite3
+./Dashboard/node_modules
