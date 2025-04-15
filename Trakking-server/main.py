@@ -64,7 +64,6 @@ async def get_id_from_db(frame, track_id):
     id = req_id(frame)
     if id != None:
         db_id_trakking[track_id] = id
-    print(type(frame))
 
 
 def trakking():
@@ -152,14 +151,14 @@ while cap.isOpened():
     print(db_id_trakking)
     for box, track_id, conf in zip(last_boxes, last_track_ids, last_confidences):
         if track_id not in db_id_trakking:
-            print(box)
+            # print(box)
             x1, y1, x2, y2 = box
-            print(tracks_history[track_id][-1])
+            # print(tracks_history[track_id][-1])
             person_img = frame[
                 max(0, y1) : min(frame.shape[0], y2),
                 max(0, x1) : min(frame.shape[1], x2),
             ]
-            print(person_img)
+            # print(person_img)
             asyncio.run(get_id_from_db(person_img, track_id))
         pass
     # FPS calculation

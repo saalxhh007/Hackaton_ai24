@@ -10,9 +10,7 @@ load_dotenv()
 
 class ENV(Enum):
     EMMBEDING_MODEL_URL = os.getenv("EMMBEDING_MODEL_URL") or ""
-
-
-# print()
+    IDENTIFICATION_SYSTEM_URL = os.getenv("IDENTIFICATION_SYSTEM_URL") or ""
 
 
 def req_id(frame):
@@ -21,4 +19,12 @@ def req_id(frame):
     if embedding is None:
         return embedding
 
+    vector_str = ",".join(map(str, embedding))
+    response = requests.get(
+        ENV.IDENTIFICATION_SYSTEM_URL.value, params={"vector": vector_str}
+    )
+    if response.status_code != 200:
+        return embedding
+    print(response.json())
+    exit(20)
     return embedding

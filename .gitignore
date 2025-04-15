@@ -2,3 +2,5 @@
 *.pt 
 *.venv 
 pyrightconfig.json
+*.pyc
+*/__pycache__/*

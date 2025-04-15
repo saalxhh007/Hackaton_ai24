@@ -14,14 +14,11 @@ model.prepare(ctx_id=0)  # Use 0 for GPU, -1 for CPU
 def get_image_embedding(file) -> list | None:
     image = Image.open(file).convert('RGB')
     img_array = np.array(image)
-
     faces = model.get(img_array)
     if len(faces) == 0:
         return None
-
     embedding = faces[0].embedding
     return embedding.tolist()
-
 @app.post("/embed-face")
 async def embed_face(file: UploadFile = File(...)):
     try:
