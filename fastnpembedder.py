@@ -2,37 +2,27 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import insightface
 import numpy as np
-from io import BytesIO
-from PIL import Image
+import cv2
+from typing import List
 
-# Initialize FastAPI
 app = FastAPI()
 
 # Load the InsightFace model once at startup
 model = insightface.app.FaceAnalysis()
 model.prepare(ctx_id=0)  # Use 0 for GPU, -1 for CPU
 
-# Define a Pydantic model for incoming data
-class FaceData(BaseModel):
-    data: list[list[int]]  # List of pixel values (RGB format)
-    height: int
-    width: int
+class ImgArray(BaseModel):
+    array: List[List[List[int]]]  # 3D array for RGB image
 
-# Helper function to convert pixel data to NumPy array
-def pixels_to_numpy(data: list, height: int, width: int) -> np.ndarray:
-    img_array = np.array(data, dtype=np.uint8).reshape((height, width, 3))
-    return img_array
+@app.post("/embed/")
+async def embed(data: ImgArray):
+    img = np.array(data.array, dtype=np.uint8)
+    resized = cv2.resize(img, (640, 640), interpolation=cv2.INTER_LINEAR)
 
-@app.post("/embed-face")
-async def embed_face(data: FaceData):
-    # Convert the pixel data into a numpy array representing the image
-    img_array = pixels_to_numpy(data.data, data.height, data.width)
+    # Run face detection and extract embedding
+    faces = model.get(resized)
+    if not faces:
+        raise HTTPException(status_code=400, detail="No face detected in the image")
 
-    # Get face embeddings
-    faces = model.get(img_array)
-    if len(faces) == 0:
-        raise HTTPException(status_code=400, detail="No face detected")
-
-    # Extract the embedding (assume one face per image)
     embedding = faces[0].embedding
     return {"embedding": embedding.tolist()}
