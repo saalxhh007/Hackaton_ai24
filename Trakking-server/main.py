@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import cv2
 import numpy as np
 import torch
+from ID import *
 from ultralytics import YOLO
 
 # --- Configuration ---
@@ -60,9 +61,10 @@ detection_valid = False
 
 
 async def get_id_from_db(frame, track_id):
-
-    db_id_trakking[track_id] = 1
-    print(frame.shape)
+    id = req_id(frame)
+    if id != None:
+        db_id_trakking[track_id] = id
+    print(type(frame))
 
 
 def trakking():
@@ -157,6 +159,7 @@ while cap.isOpened():
                 max(0, y1) : min(frame.shape[0], y2),
                 max(0, x1) : min(frame.shape[1], x2),
             ]
+            print(person_img)
             asyncio.run(get_id_from_db(person_img, track_id))
         pass
     # FPS calculation

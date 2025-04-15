@@ -1,7 +1,0 @@
-insightface 
-onnxruntime
-opencv-python
-fastapi 
-uvicorn 
-python-multipart 
-pillow 
