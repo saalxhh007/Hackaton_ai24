@@ -1,3 +1,6 @@
 envy
 *.sqlite3
-./Dashboard/node_modules
+Dashboard/node_modules
+Dashboard/.env
+fast/venv
+fast/__pycache__
