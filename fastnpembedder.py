@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 import insightface
 import numpy as np
-from pydantic import BaseModel
-import json
+from io import BytesIO
+from PIL import Image
 
 # Initialize FastAPI
 app = FastAPI()
@@ -12,46 +12,27 @@ app = FastAPI()
 model = insightface.app.FaceAnalysis()
 model.prepare(ctx_id=0)  # Use 0 for GPU, -1 for CPU
 
-# Pydantic model for receiving the NumPy array as a list
-class ImageArray(BaseModel):
-    img_array: list  # This will accept the NumPy array as a list
+# Define a Pydantic model for incoming data
+class FaceData(BaseModel):
+    data: list[list[int]]  # List of pixel values (RGB format)
+    height: int
+    width: int
 
-# Function to get embeddings from the image array
-def get_image_embedding(img_array, model):
+# Helper function to convert pixel data to NumPy array
+def pixels_to_numpy(data: list, height: int, width: int) -> np.ndarray:
+    img_array = np.array(data, dtype=np.uint8).reshape((height, width, 3))
+    return img_array
+
+@app.post("/embed-face")
+async def embed_face(data: FaceData):
+    # Convert the pixel data into a numpy array representing the image
+    img_array = pixels_to_numpy(data.data, data.height, data.width)
+
+    # Get face embeddings
     faces = model.get(img_array)
     if len(faces) == 0:
-        return None  # No face detected
+        raise HTTPException(status_code=400, detail="No face detected")
 
     # Extract the embedding (assume one face per image)
     embedding = faces[0].embedding
-    return embedding.tolist()  # Convert numpy array to list for JSON response
-
-# Endpoint to process the NumPy array and return the embedding
-@app.post("/embed-face")
-async def embed_face(data: ImageArray):
-    try:
-        # Convert the list to a NumPy array
-        img_array = np.array(data.img_array)
-
-        # Get embedding from the image array
-        embedding = get_image_embedding(img_array, model)
-        
-        if embedding is None:
-            raise HTTPException(status_code=404, detail="No face detected in the image")
-
-        return JSONResponse(content={"embedding": embedding})
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-"""
-example request
-{
-  "img_array": [
-    [255, 255, 255, ...],  # Row 1
-    [0, 0, 0, ...],        # Row 2
-    ...
-  ]
-}
-"""
-
+    return {"embedding": embedding.tolist()}
