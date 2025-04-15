@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "embeddings",
+    "check_in_out",
 ]
 
 MIDDLEWARE = [

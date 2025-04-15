@@ -4,4 +4,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('embeddings.urls')),
+    path('api2/', include('check_in_out.urls')),
 ]
