@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "embeddings",
+    "check_in_out",
 ]
 
 MIDDLEWARE = [
