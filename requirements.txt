@@ -1,0 +1,42 @@
+# Real-Time Face Recognition and Entry/Exit Detection System
+
+This project is a computer vision-based system designed to detect and recognize individuals as they enter or exit a room. It uses object detection to identify doors, face recognition to identify people, and tracks individuals in real-time to determine room occupancy and movement patterns.
+
+## 🚀 Features
+
+- 🎯 Door detection using object detection models (YOLO or similar)
+- 🧠 Face detection and recognition with real-time tracking
+- 🔁 Entry/Exit detection using bounding box logic and line crossing
+- 👤 Person tracking and ID assignment
+- 📝 Logging of individual entries and exits
+- 📸 Optional image capture or video stream input
+
+## 📦 Tech Stack
+
+- Python
+- OpenCV
+- Dlib / FaceNet / DeepFace (for face recognition)
+- YOLOv5 / YOLOv8 / custom model (for object/door detection)
+- NumPy, Pandas
+- (Optional) Flask/FastAPI for backend integration
+
+## 📂 Project Structure
+
+
+## ⚙️ How It Works
+
+1. **Door Detection**: Detect doors and define a virtual entrance line using the bottom edge of the door's bounding box.
+2. **Face Detection & Recognition**: Detect faces and compare them against a known database.
+3. **Tracking**: Track each person across frames using a tracker (e.g., SORT, Deep SORT).
+4. **Line Crossing Logic**: When a tracked individual crosses the entrance line:
+   - If entering → mark as "entered"
+   - If exiting → mark as "exited"
+5. **Logging**: Save timestamps, identities, and entry/exit events to a file or database.
+
+## ✅ Installation
+
+1. Clone the repo:
+
+```bash
+git clone https://github.com/your-username/room-entry-face-tracker.git
+cd room-entry-face-tracker
