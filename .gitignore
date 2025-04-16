@@ -1,3 +1,8 @@
 *.py 
 *.venv 
 pyrightconfig.json
+Dashboard
+envy
+fast/venv
+Trakking-server/venv
+*__pycache__*
