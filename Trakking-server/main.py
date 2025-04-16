@@ -1,28 +1,24 @@
-import asyncio
 import os
 import time
-from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
-
+import asyncio
 import cv2
 import numpy as np
 import torch
 from ultralytics import YOLO
+from fastapi import FastAPI
+from cors_config import setup_cors
+from socket_config import sio, create_socket_app
 
 # --- Configuration ---
 SAVE_DIR = "tracked_persons"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 FRAME_WIDTH, FRAME_HEIGHT = 640, 480
-DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_MARGIN = 100, 120, 10
-PANEL_HEIGHT = 150
-DETECT_EVERY_N_FRAMES = 2
-MAX_TRACK_HISTORY = 15
+DETECT_EVERY_N_FRAMES = 5
 MAX_DETECTIONS = 10
-MIN_BOX_SIZE = (60, 100)
 MIN_CONFIDENCE_FOR_SAVE = 0.5
-THUMB_HEIGHT = 120
-GRID_CELL_WIDTH, GRID_CELL_HEIGHT = 150, 180
+
+# Define box coordinates (Outside and Inside)
 box1 = (100, 100, 300, 500)  # First box coordinates (Outside)
 box2 = (400, 100, 600, 600)  # Second box coordinates (Inside)
 
@@ -39,7 +35,7 @@ if torch.backends.mkldnn.is_available():
     torch.backends.mkldnn.enabled = True
 
 print("Loading camera...")
-print("Press 'q' to exit, 'c' to clear tracking paths, 's' to show saved person images")
+print("Press 'q' to exit")
 
 # --- State ---
 fps = frame_count = 0
@@ -48,71 +44,70 @@ detect_counter = 0
 
 person_class_id = 0
 saved_ids = set()
-person_images = {}
-display_positions = {}
-tracks_history = defaultdict(list)
-db_id_trakking = {}
-
-# Dictionary to track the previous state of each user
-user_state = {}  # Example: {track_id: "خارج", ...}
+db_id_trakking = {}  # Store user states {track_id: {"state": "enter" or "out"}}
 
 last_boxes, last_track_ids, last_confidences = [], [], []
 detection_valid = False
 
-# --- Functions send database---
+# Initialize FastAPI app and Socket.IO server
+app = FastAPI()
+
+# Setup CORS middleware
+setup_cors(app)
+
+# Create and integrate Socket.IO app
+socket_app = create_socket_app(app)
+
+# Mount the Socket.IO app to the FastAPI app at the "/ws" path
+app.mount("/ws", socket_app)
+
+# Flag to check if frame streaming is enabled
+frame_streaming_enabled = False
+
+@sio.event
+async def connect(sid, environ):
+    print(f"[INFO] Client connected: {sid}")
+
+@sio.event
+async def disconnect(sid):
+    print(f"[INFO] Client disconnected: {sid}")
+
+@sio.on('start_frame_stream')
+async def start_frame_stream(sid, message):
+    global frame_streaming_enabled
+    if message == "1":
+        print("[INFO] Starting frame streaming...")
+        frame_streaming_enabled = True
+    else:
+        print("[INFO] Stopping frame streaming...")
+        frame_streaming_enabled = False
+
 def send_to_database(track_id, state):
     """
-    Simulates sending data to a database.
+    Simulates sending data to a database asynchronously.
     Replace this with actual database logic.
     """
-    try:
-      
+    async def async_send():
         print(f"[INFO] Sending to database: User ID {track_id}, State: {state}")
-        # Simulate network delay
-        time.sleep(2)
+        await asyncio.sleep(2)  # Simulate network delay
         print(f"[INFO] Data sent successfully for User ID {track_id}")
-    except Exception as e:
-        print(f"[ERROR] Error sending data for User ID {track_id}: {e}")
+    asyncio.run(async_send())
 
-# Create a thread pool executor
-executor = ThreadPoolExecutor(max_workers=5)
-
-def trakking():
-    global user_state  # Access the global state dictionary
-
+def trakking(display_frame):
     if detection_valid:
         for box, track_id, conf in zip(last_boxes, last_track_ids, last_confidences):
-            x1, y1, x2, y2 = box
-            color = COLORS[track_id % len(COLORS)]
-            center = ((x1 + x2) // 2, (y1 + y2) // 2)
+            x1, y1, x2, y2 = box  # Person's bounding box coordinates
 
-            # Store tracking history
-            tracks_history[track_id].append(center)
-            if len(tracks_history[track_id]) > MAX_TRACK_HISTORY:
-                tracks_history[track_id] = tracks_history[track_id][-MAX_TRACK_HISTORY:]
+            # Check overlap with box1 and box2 based on horizontal position only
+            def is_overlapping(boxA, boxB):
+                """
+                Check if two boxes overlap horizontally.
+                boxA and boxB are tuples (x1, y1, x2, y2).
+                """
+                return not (boxA[2] <= boxB[0] or boxA[0] >= boxB[2])
 
-            # Draw tracking path
-            if len(tracks_history[track_id]) > 3:
-                pts = np.array(tracks_history[track_id], np.int32).reshape((-1, 1, 2))
-                cv2.polylines(display_frame, [pts], False, color, 2)
-
-            # Draw bounding box around the person
-            cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
-
-            # Display the ID above the bounding box
-            cv2.putText(
-                display_frame,
-                f"ID: {track_id}",
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                color,
-                2,
-            )
-
-            # Check if the person is inside a box based on horizontal position only
-            in_box1 = box1[0] <= center[0] <= box1[2]
-            in_box2 = box2[0] <= center[0] <= box2[2]
+            in_box1 = is_overlapping((x1, y1, x2, y2), box1)
+            in_box2 = is_overlapping((x1, y1, x2, y2), box2)
 
             # Determine the current state
             if in_box1:
@@ -122,33 +117,38 @@ def trakking():
             else:
                 current_state = None
 
+            # Ensure track_id exists in db_id_trakking
+            if track_id not in db_id_trakking:
+                db_id_trakking[track_id] = {"state": None}
+
             # Get the previous state of the user
-            previous_state = user_state.get(track_id, None)
-            print("mossab",previous_state != current_state,previous_state,current_state)
+            previous_state = db_id_trakking[track_id]["state"]
+
             # Check for state transitions
             if previous_state != current_state:
                 if previous_state == "out" and current_state == "enter":
                     print(f"[INFO] User with ID {track_id} entered Box 2 (Inside).")
-                    # Submit the database task to the thread pool
-                    executor.submit(send_to_database, track_id, "enter")
+                    print(f"[INFO] Status: {current_state}, ID: {track_id}")  # Print status and ID
+                    send_to_database(track_id, "enter")  # Send to database
                 elif previous_state == "enter" and current_state == "out":
                     print(f"[INFO] User with ID {track_id} exited to Box 1 (Outside).")
-                    # Submit the database task to the thread pool
-                    executor.submit(send_to_database, track_id, "out")
+                    print(f"[INFO] Status: {current_state}, ID: {track_id}")  # Print status and ID
+                    send_to_database(track_id, "out")  # Send to database
 
             # Update the user's state
-            if current_state:
-                user_state[track_id] = current_state
+            db_id_trakking[track_id]["state"] = current_state
 
-            # Draw fixed boxes
-            cv2.rectangle(display_frame, (box1[0], box1[1]), (box1[2], box1[3]), (255, 0, 0), 2)  # Box 1 (Blue, Outside)
-            cv2.rectangle(display_frame, (box2[0], box2[1]), (box2[2], box2[3]), (0, 0, 255), 2)  # Box 2 (Red, Inside)
-
-        # Print all users and their states
-        print("[INFO] Current User States:")
-        for track_id, state in user_state.items():
-
-                print(f"User ID: {track_id}, State: {state}")
+            # Display ID above the person
+            color = COLORS[track_id % len(COLORS)]
+            cv2.putText(
+                display_frame,
+                f"ID: {track_id}",
+                (x1, y1 - 10),  # Position above the person
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.2,  # Larger font size
+                color,  # Use the same color as the track
+                2,  # Thicker font
+            )
 
 while cap.isOpened():
     success, frame = cap.read()
@@ -165,10 +165,10 @@ while cap.isOpened():
         results = model.track(
             frame,
             persist=True,
-            device="cpu",
+            device="cpu",  # Use GPU if available ("cuda")
             classes=[person_class_id],
             tracker="bytetrack.yaml",
-            imgsz=320,
+            imgsz=320,  # Smaller image size for better performance
             conf=0.35,
             iou=0.45,
             max_det=MAX_DETECTIONS,
@@ -180,7 +180,7 @@ while cap.isOpened():
             last_confidences = results[0].boxes.conf.cpu().numpy()
             detection_valid = True
 
-    trakking()
+    trakking(display_frame)
 
     # FPS calculation
     frame_count += 1
@@ -188,6 +188,7 @@ while cap.isOpened():
         fps = frame_count / (time.time() - start_time)
         frame_count, start_time = 0, time.time()
 
+    # Display FPS
     cv2.putText(
         display_frame,
         f"FPS: {fps:.1f}",
@@ -198,18 +199,30 @@ while cap.isOpened():
         2,
     )
 
+    # Draw fixed boxes
+    cv2.rectangle(display_frame, (box1[0], box1[1]), (box1[2], box1[3]), (255, 0, 0), 2)  # Box 1 (Blue, Outside)
+    cv2.rectangle(display_frame, (box2[0], box2[1]), (box2[2], box2[3]), (0, 0, 255), 2)  # Box 2 (Red, Inside)
+
+    # Send frames to frontend using Socket.IO
+    if frame_streaming_enabled:
+        _, buffer = cv2.imencode('.jpg', display_frame)
+        frame_bytes = buffer.tobytes()
+        asyncio.run(sio.emit('frame_update', {'frame': frame_bytes}))
+
     cv2.imshow("Person Tracking with ID Images", display_frame)
 
     key = cv2.waitKey(1)
     if key == ord("q"):
         print("[INFO] Exiting program...")
         break
-    elif key == ord("e"):
-        print("[INFO] Force exiting program...")
-        break
-
-# Shutdown the thread pool executor
-executor.shutdown(wait=True)
 
 cap.release()
 cv2.destroyAllWindows()
+
+# Run FastAPI app
+if __name__ == '__main__':
+    import uvicorn
+    print("Starting FastAPI server on port 8000...")
+    uvicorn.run(app, host='0.0.0.0', port=8000)
+
+
