@@ -8,3 +8,5 @@ envy
 pyrightconfig.json
 *.pyc
 */__pycache__/*
+Trakking-server/tracked_persons
+backend/media

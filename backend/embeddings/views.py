@@ -162,14 +162,15 @@ def get_embedding_from_image(request):
     """
 
     image_file = request.FILES.get('image')
+    print(image_file)
     if not image_file:
-        return JsonResponse({"error": "No image file provided."}, status=400)
+        return JsonResponse({"message": "No image file provided."}, status=400)
 
     try:
         file_bytes = np.asarray(bytearray(image_file.read()), dtype=np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     except Exception as e:
-        return JsonResponse({"error": f"Failed to decode image: {str(e)}"}, status=400)
+        return JsonResponse({"message": f"Failed to decode image: {str(e)}"}, status=400)
 
     embedding = get_image_embedding(img_array, model)
     if embedding is None:
@@ -183,7 +184,7 @@ def get_embedding_from_image(request):
             with_vectors=True,
         )
     except Exception as e:
-        return JsonResponse({"error": f"Vector search failed: {str(e)}"}, status=500)
+        return JsonResponse({"message": f"Vector search failed: {str(e)}"}, status=500)
 
     if not search_result:
         return JsonResponse({"message": "No matching embedding found."}, status=404)
@@ -195,6 +196,8 @@ def get_embedding_from_image(request):
         "vector": point.vector,
         "payload": point.payload,
     }
+    
+    
 
     return JsonResponse(response_data)
 

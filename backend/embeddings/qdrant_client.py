@@ -1,5 +1,5 @@
 import uuid
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient , models
 from qdrant_client.http.models import VectorParams, Distance
 
 def generate_session() -> str:

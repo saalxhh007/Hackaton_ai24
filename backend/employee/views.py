@@ -1,7 +1,6 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-
 import embeddings.npfaceembedding as npface
 import embeddings.qdrant_client as qdrant
 import numpy as np
@@ -10,7 +9,6 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from insightface.app import cv2
 from PIL import Image
-
 from .models import Employee
 
 
