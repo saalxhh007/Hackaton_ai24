@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+        "allowJs": true, // Enable JavaScript and JSX file support
+        "jsx": "react" // Specify JSX mode (e.g., "react" for React projects)
+    },
+    "include": ["./src/**/*"], // Include all files in the src directory
+    "exclude": ["node_modules"] // Exclude node_modules
+}
