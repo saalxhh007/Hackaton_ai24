@@ -145,7 +145,7 @@ def capture_image(track_id, display_frame, box):
 def process_photo_queue():
     """
     Process the photo queue continuously.
-    After 3 failed attempts, mark the person as "Unknown Person".
+    After 5 failed attempts, mark the person as "Unknown Person".
     """
     global is_processing
     
@@ -156,7 +156,7 @@ def process_photo_queue():
         try:
             # Block until an item is available (with timeout)
             try:
-                track_id, image_path = photo_queue.get(timeout=3)
+                track_id, image_path = photo_queue.get(timeout=5)
             except Empty:
                 # If no new items after timeout, exit the thread
                 with processing_lock:
@@ -180,7 +180,7 @@ def process_photo_queue():
                     if track_id in db_id_tracking:
                         db_id_tracking[track_id]["processing"] = False
                         
-                        if "payload" in response and "name" in response["payload"] and response["score"] > 0.2:
+                        if "payload" in response and "name" in response["payload"] and abs(response["score"]) > 0.2:
                             # Person identified successfully
                             name = response["payload"]["name"]
                             db_id_tracking[track_id]["identified"] = True
@@ -197,7 +197,7 @@ def process_photo_queue():
                             attempts = db_id_tracking[track_id]["recognition_attempts"]
                             
                             # If 3 attempts have been made, mark as "Unknown Person"
-                            if attempts >= 3:
+                            if attempts >= 5:
                                 db_id_tracking[track_id]["identified"] = True
                                 db_id_tracking[track_id]["name"] = "Unknown Person"
                                 
