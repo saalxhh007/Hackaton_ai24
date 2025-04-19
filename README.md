@@ -38,6 +38,13 @@ A computer vision-based system that detects and recognizes individuals. It uses 
 
 ## 🧪 Installation & Setup
 
+### 🔹 Clone the Repository
+```bash
+git clone https://github.com/saalxhh007/Hackaton_ai24
+cd Hackaton_ai24
+```
+
+
 ### 🔹 Qdrant (Vector Database)
 ```bash
 # 1. Pull the image
