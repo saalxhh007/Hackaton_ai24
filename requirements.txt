@@ -1,0 +1,23 @@
+# Core Libraries
+numpy
+opencv-python
+torch
+requests
+asyncio
+
+# Face Recognition
+insightface
+
+# Object Detection
+ultralytics
+
+# Django Backend
+django
+django-cors-headers
+
+# Vector Database
+qdrant-client
+
+# Optional FastAPI Integration
+fastapi
+uvicorn
