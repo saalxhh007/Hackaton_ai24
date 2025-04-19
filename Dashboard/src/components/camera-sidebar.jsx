@@ -1,7 +1,6 @@
 import {
   Activity,
   Home,
-  MapPin,
   PersonStanding,
   Plus,
   Video,
@@ -33,8 +32,9 @@ function NavButton({ icon, label, link, onClick }) {
 }
 
 export function CameraSidebar({ onCameraSelect }) {
-  const location = useLocation();
+  const location = useLocation().pathname;
   const navigate = useNavigate();
+  
 
   // Camera data organized by groups
   const cameraGroups = [
@@ -97,16 +97,11 @@ export function CameraSidebar({ onCameraSelect }) {
   ];
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col h-screen">
       {/* Header */}
       <div className="p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Cameras</h2>
-          <Button size="sm" variant="outline">
-            <Plus className="mr-1 h-4 w-4" />
-            Add
-          </Button>
-        </div>
+          <h2 className="text-lg font-semibold">{location.replace("/", "").charAt(0).toUpperCase() + location.slice(1)}</h2>
+          
         <div className="mt-3">
           <Input placeholder="Search cameras..." />
         </div>
@@ -115,7 +110,7 @@ export function CameraSidebar({ onCameraSelect }) {
       <Separator />
 
       {/* Main Content */}
-      <ScrollArea className="flex-1 px-3 py-2">
+      <div className="flex-1 px-3 py-2">
         {/* Navigation Buttons */}
         <div className="space-y-1">
           {navItems.map((item, index) => (
@@ -129,11 +124,11 @@ export function CameraSidebar({ onCameraSelect }) {
           ))}
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="my-4 overflow-scroll" />
 
         {/* Camera Groups */}
         {location === "/cameras" && (
-          <div className="space-y-3">
+          <ScrollArea className="space-y-3 h-[300px]">
             {cameraGroups.map((group, index) => (
               <CameraGroup
                 key={index}
@@ -143,9 +138,9 @@ export function CameraSidebar({ onCameraSelect }) {
                 defaultOpen={group.defaultOpen}
               />
             ))}
-          </div>
+          </ScrollArea>
         )}
-      </ScrollArea>
+      </div>
 
       <Separator />
 

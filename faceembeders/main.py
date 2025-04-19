@@ -1,5 +1,3 @@
-from io import BytesIO
-
 import insightface
 import numpy as np
 from fastapi import FastAPI, HTTPException

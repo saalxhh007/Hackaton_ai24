@@ -1,6 +1,3 @@
-import io
-
-import cv2
 import insightface
 import numpy as np
 from PIL import Image

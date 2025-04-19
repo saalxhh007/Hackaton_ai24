@@ -1,10 +1,9 @@
 Dashboard
 Dashboard/node_modules
-fast/venv
 Trakking
 envy
 *.pt
-*.venv 
+*venv 
 pyrightconfig.json
 *.pyc
 */__pycache__/*

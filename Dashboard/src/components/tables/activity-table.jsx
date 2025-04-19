@@ -1,25 +1,69 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Calendar, ChevronDown, ChevronUp, Clock, Search, Users } from "lucide-react"
-import { Input } from "../ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-
+import { useState, useEffect } from "react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Search,
+  Users,
+} from "lucide-react";
+import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 // Mock activity data
 const generateActivityData = () => {
   // Create entries and exits for each employee
-  const activities = []
+  const activities = [];
   const employees = [
-    { id: "EMP001", name: "John Smith", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP002", name: "Sarah Johnson", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP003", name: "Michael Brown", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP004", name: "Emily Davis", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP005", name: "David Wilson", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP006", name: "Jennifer Miller", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP007", name: "Robert Taylor", photo: "/placeholder.svg?height=40&width=40" },
-    { id: "EMP008", name: "Lisa Anderson", photo: "/placeholder.svg?height=40&width=40" },
-  ]
+    {
+      id: "EMP001",
+      name: "John Smith",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP002",
+      name: "Sarah Johnson",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP003",
+      name: "Michael Brown",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP004",
+      name: "Emily Davis",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP005",
+      name: "David Wilson",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP006",
+      name: "Jennifer Miller",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP007",
+      name: "Robert Taylor",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "EMP008",
+      name: "Lisa Anderson",
+      photo: "/placeholder.svg?height=40&width=40",
+    },
+  ];
 
   employees.forEach((employee) => {
     // Morning entry
@@ -28,11 +72,17 @@ const generateActivityData = () => {
       employeeId: employee.id,
       name: employee.name,
       type: "entry",
-      timestamp: new Date(new Date().setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0)),
+      timestamp: new Date(
+        new Date().setHours(
+          8 + Math.floor(Math.random() * 2),
+          Math.floor(Math.random() * 60),
+          0
+        )
+      ),
       photo: employee.photo,
-    }
+    };
 
-    activities.push(morningEntry)
+    activities.push(morningEntry);
 
     // Some employees have lunch breaks
     if (Math.random() > 0.3) {
@@ -41,18 +91,22 @@ const generateActivityData = () => {
         employeeId: employee.id,
         name: employee.name,
         type: "exit",
-        timestamp: new Date(new Date().setHours(12, Math.floor(Math.random() * 30), 0)),
+        timestamp: new Date(
+          new Date().setHours(12, Math.floor(Math.random() * 30), 0)
+        ),
         photo: employee.photo,
-      })
+      });
 
       activities.push({
         id: `entry-${employee.id}-after-lunch`,
         employeeId: employee.id,
         name: employee.name,
         type: "entry",
-        timestamp: new Date(new Date().setHours(13, Math.floor(Math.random() * 30), 0)),
+        timestamp: new Date(
+          new Date().setHours(13, Math.floor(Math.random() * 30), 0)
+        ),
         photo: employee.photo,
-      })
+      });
     }
 
     // Evening exit - some employees are still present
@@ -62,137 +116,170 @@ const generateActivityData = () => {
         employeeId: employee.id,
         name: employee.name,
         type: "exit",
-        timestamp: new Date(new Date().setHours(16 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 60), 0)),
+        timestamp: new Date(
+          new Date().setHours(
+            16 + Math.floor(Math.random() * 3),
+            Math.floor(Math.random() * 60),
+            0
+          )
+        ),
         photo: employee.photo,
-      })
+      });
     }
-  })
+  });
 
   // Sort by timestamp (newest first)
-  return activities.sort((a, b) => b.timestamp - a.timestamp)
-}
+  return activities.sort((a, b) => b.timestamp - a.timestamp);
+};
 
 // Determine current status of employees
 const determineEmployeeStatus = (activities) => {
-  const status = {}
+  const status = {};
 
   // Group activities by employee
-  const employeeActivities = {}
+  const employeeActivities = {};
   activities.forEach((activity) => {
     if (!employeeActivities[activity.employeeId]) {
-      employeeActivities[activity.employeeId] = []
+      employeeActivities[activity.employeeId] = [];
     }
-    employeeActivities[activity.employeeId].push(activity)
-  })
+    employeeActivities[activity.employeeId].push(activity);
+  });
 
   // Sort each employee's activities by time (most recent first)
   Object.keys(employeeActivities).forEach((employeeId) => {
-    employeeActivities[employeeId].sort((a, b) => b.timestamp - a.timestamp)
-    const lastActivity = employeeActivities[employeeId][0]
+    employeeActivities[employeeId].sort((a, b) => b.timestamp - a.timestamp);
+    const lastActivity = employeeActivities[employeeId][0];
     status[employeeId] = {
       present: lastActivity.type === "entry",
       lastActivity: lastActivity,
-    }
-  })
+    };
+  });
 
-  return status
-}
+  return status;
+};
 
 export function ActivityTable() {
-  const [activities, setActivities] = useState([])
-  const [employeeStatus, setEmployeeStatus] = useState({})
-  const [search, setSearch] = useState("")
-  const [filteredActivities, setFilteredActivities] = useState([])
-  const [filter, setFilter] = useState("all")
-  const [sortField, setSortField] = useState("timestamp")
-  const [sortDirection, setSortDirection] = useState("desc")
+  const [activities, setActivities] = useState([]);
+  const [employeeStatus, setEmployeeStatus] = useState({});
+  const [search, setSearch] = useState("");
+  const [filteredActivities, setFilteredActivities] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [sortField, setSortField] = useState("timestamp");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Initialize data
   useEffect(() => {
-    const activityData = generateActivityData()
-    setActivities(activityData)
-    setFilteredActivities(activityData)
+    const activityData = generateActivityData();
+    setActivities(activityData);
+    setFilteredActivities(activityData);
 
-    const status = determineEmployeeStatus(activityData)
-    setEmployeeStatus(status)
-  }, [])
+    const status = determineEmployeeStatus(activityData);
+    setEmployeeStatus(status);
+  }, []);
 
   // Handle search
   const handleSearch = (e) => {
-    const searchTerm = e.target.value.toLowerCase()
-    setSearch(searchTerm)
-    applyFilters(searchTerm, filter)
-  }
+    const searchTerm = e.target.value.toLowerCase();
+    setSearch(searchTerm);
+    applyFilters(searchTerm, filter);
+  };
 
   // Handle filter change
   const handleFilterChange = (value) => {
-    setFilter(value)
-    applyFilters(search, value)
-  }
+    setFilter(value);
+    applyFilters(search, value);
+  };
 
   // Apply both filters and search
   const applyFilters = (searchTerm, filterType) => {
-    let filtered = activities
+    let filtered = activities;
 
     // Apply search
     if (searchTerm) {
       filtered = filtered.filter(
         (activity) =>
-          activity.name.toLowerCase().includes(searchTerm) || activity.employeeId.toLowerCase().includes(searchTerm),
-      )
+          activity.name.toLowerCase().includes(searchTerm) ||
+          activity.employeeId.toLowerCase().includes(searchTerm)
+      );
     }
 
     // Apply filter
     if (filterType === "entry") {
-      filtered = filtered.filter((activity) => activity.type === "entry")
+      filtered = filtered.filter((activity) => activity.type === "entry");
     } else if (filterType === "exit") {
-      filtered = filtered.filter((activity) => activity.type === "exit")
+      filtered = filtered.filter((activity) => activity.type === "exit");
     }
 
-    setFilteredActivities(filtered)
-  }
+    setFilteredActivities(filtered);
+  };
 
   // Handle sorting
   const handleSort = (field) => {
-    const newDirection = field === sortField && sortDirection === "desc" ? "asc" : "desc"
-    setSortField(field)
-    setSortDirection(newDirection)
+    const newDirection =
+      field === sortField && sortDirection === "desc" ? "asc" : "desc";
+    setSortField(field);
+    setSortDirection(newDirection);
 
     const sortedActivities = [...filteredActivities].sort((a, b) => {
       if (field === "timestamp") {
-        return newDirection === "desc" ? b[field] - a[field] : a[field] - b[field]
+        return newDirection === "desc"
+          ? b[field] - a[field]
+          : a[field] - b[field];
       } else {
-        return newDirection === "desc" ? (b[field] > a[field] ? 1 : -1) : a[field] > b[field] ? 1 : -1
+        return newDirection === "desc"
+          ? b[field] > a[field]
+            ? 1
+            : -1
+          : a[field] > b[field]
+          ? 1
+          : -1;
       }
-    })
+    });
 
-    setFilteredActivities(sortedActivities)
-  }
+    setFilteredActivities(sortedActivities);
+  };
 
   // Calculate attendance summary
   const calculateSummary = () => {
-    const totalEmployees = Object.keys(employeeStatus).length
-    const presentCount = Object.values(employeeStatus).filter((status) => status.present).length
+    const totalEmployees = Object.keys(employeeStatus).length;
+    const presentCount = Object.values(employeeStatus).filter(
+      (status) => status.present
+    ).length;
 
     return {
       total: totalEmployees,
       present: presentCount,
       absent: totalEmployees - presentCount,
-    }
-  }
+    };
+  };
 
-  const summary = calculateSummary()
+  const summary = calculateSummary();
 
   // Format timestamp
   const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   // Render sort indicator
   const renderSortIndicator = (field) => {
-    if (sortField !== field) return null
-    return sortDirection === "asc" ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-  }
+    if (sortField !== field) return null;
+    return sortDirection === "asc" ? (
+      <ChevronUp className="ml-1 h-4 w-4" />
+    ) : (
+      <ChevronDown className="ml-1 h-4 w-4" />
+    );
+  };
+
+  const totalPages = Math.ceil(filteredActivities.length / itemsPerPage);
+  const paginatedActivities = filteredActivities.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="w-full space-y-4 p-12">
@@ -251,26 +338,39 @@ export function ActivityTable() {
             <thead>
               <tr className="bg-secondary/50">
                 <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div className="flex items-center cursor-pointer" onClick={() => handleSort("timestamp")}>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleSort("timestamp")}
+                  >
                     Time {renderSortIndicator("timestamp")}
                   </div>
                 </th>
                 <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div className="flex items-center cursor-pointer" onClick={() => handleSort("employeeId")}>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleSort("employeeId")}
+                  >
                     ID {renderSortIndicator("employeeId")}
                   </div>
                 </th>
                 <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div className="flex items-center cursor-pointer" onClick={() => handleSort("name")}>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleSort("name")}
+                  >
                     Employee {renderSortIndicator("name")}
                   </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">Activity</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">Current Status</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  Activity
+                </th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  Current Status
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredActivities.map((activity) => (
+              {paginatedActivities.map((activity) => (
                 <tr key={activity.id} className="border-t">
                   <td className="whitespace-nowrap px-4 py-3">
                     <div className="flex items-center">
@@ -278,7 +378,9 @@ export function ActivityTable() {
                       {formatTime(activity.timestamp)}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-medium">{activity.employeeId}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-medium">
+                    {activity.employeeId}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center">
                       <img
@@ -292,7 +394,9 @@ export function ActivityTable() {
                   <td className="whitespace-nowrap px-4 py-3">
                     <div
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        activity.type === "entry" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+                        activity.type === "entry"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
                       }`}
                     >
                       {activity.type === "entry" ? "Entry" : "Exit"}
@@ -330,10 +434,26 @@ export function ActivityTable() {
             })}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Showing <strong>{filteredActivities.length}</strong> of <strong>{activities.length}</strong> activities
-        </p>
+        <div className="flex justify-end items-center gap-2 mt-4">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm">
+            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

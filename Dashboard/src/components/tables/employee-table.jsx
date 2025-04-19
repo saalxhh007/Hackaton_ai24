@@ -12,6 +12,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import axios from "axios";
 import EmployeeForm from "./employee-form";
 
@@ -20,23 +28,28 @@ const url = import.meta.env.VITE_BACKEND_URL;
 export function EmployeeTable() {
   const [initialEmployeesData, setInitialEmployeesData] = useState([]);
 
-  const fetchInitialEmployeesData = async () => {
+  const fetchInitialEmployeesData = async (currentPage = 1) => {
     try {
-      const response = await axios.get(`${url}/api3/employees/`);
-      console.log(response);
-
+      const response = await axios.get(
+        `${url}/api3/employees/?page=${currentPage}&limit=${limit}`
+      );
       if (response.status === 200) {
-        setInitialEmployeesData(response.data);
+        setInitialEmployeesData(response.data.results);
+        setTotal(response.data.total);
+        setPage(response.data.page);
       }
     } catch (error) {
       console.error("Error fetching employee data:", error);
     }
   };
 
+  const [page, setPage] = useState(1);
+  const [limit] = useState(6); // or 10, up to you
+  const [total, setTotal] = useState(0);
+
   useEffect(() => {
-    // Fetch initial employee data from the API
-    fetchInitialEmployeesData();
-  }, []);
+    fetchInitialEmployeesData(page);
+  }, [page]);
 
   const [employeesData, setEmployeesData] = useState(initialEmployeesData);
   const [employees, setEmployees] = useState(initialEmployeesData);
@@ -112,10 +125,6 @@ export function EmployeeTable() {
     );
   };
 
-  useEffect(() => {
-    console.log("employees: ", employees);
-  }, [employees]);
-
   return (
     <div className="w-full space-y-4 p-12">
       <div className="flex items-center justify-between">
@@ -137,141 +146,147 @@ export function EmployeeTable() {
       </div>
 
       <div className="rounded-md border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-secondary/50">
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div
-                    className="flex items-center cursor-pointer"
-                    onClick={() => handleSort("id")}
-                  >
-                    ID {renderSortIndicator("id")}
-                  </div>
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div
-                    className="flex items-center cursor-pointer"
-                    onClick={() => handleSort("name")}
-                  >
-                    Employee {renderSortIndicator("name")}
-                  </div>
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div
-                    className="flex items-center cursor-pointer"
-                    onClick={() => handleSort("department")}
-                  >
-                    Department {renderSortIndicator("department")}
-                  </div>
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  <div
-                    className="flex items-center cursor-pointer"
-                    onClick={() => handleSort("position")}
-                  >
-                    Position {renderSortIndicator("position")}
-                  </div>
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  Contact
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                  Status
-                </th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.length > 0 &&
-                employees.map((employee) => (
-                  <tr key={employee.id} className="border-t">
-                    <td className="whitespace-nowrap px-4 py-3 font-medium">
-                      {employee.id}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center">
-                        <img
-                          src={employee.photo || "/placeholder.svg"}
-                          alt={employee.name}
-                          className="mr-2 h-8 w-8 rounded-full object-cover"
-                        />
-                        <span>{employee.name}</span>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-secondary/50">
+              <TableHead className="whitespace-nowrap">
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={() => handleSort("id")}
+                >
+                  ID {renderSortIndicator("id")}
+                </div>
+              </TableHead>
+              <TableHead className="whitespace-nowrap">
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={() => handleSort("name")}
+                >
+                  Employee {renderSortIndicator("name")}
+                </div>
+              </TableHead>
+              <TableHead className="whitespace-nowrap">
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={() => handleSort("department")}
+                >
+                  Department {renderSortIndicator("department")}
+                </div>
+              </TableHead>
+              <TableHead className="whitespace-nowrap">
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={() => handleSort("position")}
+                >
+                  Position {renderSortIndicator("position")}
+                </div>
+              </TableHead>
+              <TableHead className="whitespace-nowrap">Contact</TableHead>
+              <TableHead className="whitespace-nowrap">Status</TableHead>
+              <TableHead className="whitespace-nowrap"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employees.length > 0 &&
+              employees.map((employee) => (
+                <TableRow key={employee.id}>
+                  <TableCell className="whitespace-nowrap font-medium">
+                    {employee.id}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <img
+                        src={`${url}/${employee.photo}`}
+                        alt={employee.name}
+                        className="mr-2 h-8 w-8 rounded-full object-cover"
+                      />
+                      <span>{employee.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {employee.department}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {employee.position}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div>{employee.email}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {employee.phone}
                       </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      {employee.department}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      {employee.position}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <div>{employee.email}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {employee.phone}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
-                      ${
-                        employee.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                      >
-                        {employee.status === "active" ? "Active" : "Inactive"}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>View profile</DropdownMenuItem>
-                          <DropdownMenuItem>Edit employee</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            Deactivate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <div
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
+                    ${
+                      employee.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                    >
+                      {employee.status === "active" ? "Active" : "Inactive"}
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>View profile</DropdownMenuItem>
+                        <DropdownMenuItem>Edit employee</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">
+                          Deactivate
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
       </div>
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing <strong>{employees.length}</strong> of{" "}
-          <strong>{employeesData.length}</strong> employees
+          Showing from <strong>{employees.length * page - (employees.length - 1)}</strong> To <strong>{employees.length * page}</strong>
         </p>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          >
             Previous
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <span className="text-sm">Page {page}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page * limit >= total}
+            onClick={() => setPage((prev) => prev + 1)}
+          >
             Next
           </Button>
         </div>
       </div>
 
       {/* Employee Form Modal */}
-      <EmployeeForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onAddEmployee={handleAddEmployee}
-      />
+      {formOpen && (
+        <EmployeeForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onAddEmployee={handleAddEmployee}
+        />
+      )}
     </div>
   );
 }

@@ -1,11 +1,10 @@
 import asyncio
 import json
-from collections.abc import AsyncIterator
 import embeddings.npfaceembedding as npface
 import embeddings.qdrant_client as qdrant
 import numpy as np
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from insightface.app import cv2
 from PIL import Image
@@ -14,17 +13,35 @@ from .models import Employee
 
 def employee_list(request):
     employees = Employee.objects.all()
+
+    # Get pagination query params
+    page = int(request.GET.get("page", 1))
+    limit = int(request.GET.get("limit", 10))
+
+    # Paginate
+    paginator = Paginator(employees, limit)
+    current_page = paginator.get_page(page)
+
     data = [
         {
             "id": emp.id,
             "name": emp.name,
             "department": emp.department,
             "position": emp.position,
+            "email": emp.email,
+            "phone": emp.phone,
+            "status": emp.status,
+            "photo": emp.photo.url if emp.photo else "/media/employee_photos/avatar.jpg"
         }
-        for emp in employees
+        for emp in current_page
     ]
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse({
+        "results": data,
+        "total": paginator.count,
+        "page": current_page.number,
+        "num_pages": paginator.num_pages,
+    })
 
 
 @csrf_exempt

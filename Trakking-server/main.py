@@ -17,10 +17,6 @@ DETECT_EVERY_N_FRAMES = 8  # Increased from 5 to reduce CPU load
 MAX_DETECTIONS = 10
 MIN_CONFIDENCE_FOR_SAVE = 0.5
 
-# Define box coordinates (Outside and Inside)
-box1 = (100, 100, 300, 500)  # First box coordinates (Outside)
-box2 = (400, 100, 600, 600)  # Second box coordinates (Inside)
-
 # --- Init ---
 np.random.seed(42)
 COLORS = np.random.randint(0, 255, size=(100, 3), dtype=np.uint8).tolist()
@@ -233,11 +229,6 @@ def tracking(display_frame):
     for box, track_id, conf in zip(last_boxes, last_track_ids, last_confidences):
         x1, y1, x2, y2 = box
 
-        in_box1 = is_in_box((x1, y1, x2, y2), box1)
-        in_box2 = is_in_box((x1, y1, x2, y2), box2)
-
-        current_state = "out" if in_box1 else ("enter" if in_box2 else None)
-
         # Initialize tracking entry if not exists - use dict.setdefault for efficiency
         if track_id not in db_id_tracking:
             db_id_tracking[track_id] = {
@@ -248,12 +239,6 @@ def tracking(display_frame):
                 "last_photo_time": 0,
                 "recognition_attempts": 0
             }
-
-        previous_state = db_id_tracking[track_id]["state"]
-
-        # Only update state if it changed to avoid unnecessary processing
-        if previous_state != current_state:
-            db_id_tracking[track_id]["state"] = current_state
 
         # Logic for taking photos - only if needed
         if (not db_id_tracking[track_id]["identified"] and 
@@ -277,22 +262,36 @@ def tracking(display_frame):
                             thread.daemon = True
                             thread.start()
 
-        # Display name or ID on screen - optimize text drawing
+        # Draw bounding box around the person
         color = COLORS[int(track_id) % len(COLORS)]
+        cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
+
+        # Display name with improved visibility
         text = f"Name: {db_id_tracking[track_id]['name']}" if db_id_tracking[track_id]["name"] else f"ID: {track_id}"
         
         # Add indicator if currently processing
         if db_id_tracking[track_id]["processing"]:
-            text += " (proc...)"
-            
+            text += " (processing...)"
+        
+        # Draw a filled rectangle behind the text for better visibility
+        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+        cv2.rectangle(
+            display_frame,
+            (x1, y1 - 25),
+            (x1 + text_size[0], y1),
+            color,
+            -1  # Filled rectangle
+        )
+        
+        # Draw white text for better contrast
         cv2.putText(
             display_frame,
             text,
             (x1, y1 - 5),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,  # Smaller font
-            color,
-            1,    # Thinner line
+            0.7,  # Larger font
+            (255, 255, 255),  # White text
+            2,    # Thicker line for better visibility
         )
 
 # Main loop with performance optimizations
@@ -301,13 +300,6 @@ frame_skip = 0  # Skip frames when system is under load
 
 # Function to draw UI elements - separate from main processing
 def draw_ui(display_frame, fps, frame_time):
-    # Draw boxes - these are static and could be pre-computed for even more efficiency
-    cv2.rectangle(display_frame, (box1[0], box1[1]), (box1[2], box1[3]), (255, 0, 0), 2)
-    cv2.putText(display_frame, "Outside", (box1[0], box1[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-    
-    cv2.rectangle(display_frame, (box2[0], box2[1]), (box2[2], box2[3]), (0, 0, 255), 2)
-    cv2.putText(display_frame, "Inside", (box2[0], box2[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
     # Display stats
     identified_count = sum(1 for entry in db_id_tracking.values() if entry["identified"])
     pending_count = sum(1 for entry in db_id_tracking.values() if not entry["identified"])
