@@ -19,7 +19,7 @@ A computer vision-based system that detects and recognizes individuals. It uses 
 |------------------|-------------------------------|
 | Face Detection   | InsightFace                   |
 | Person Detection | YOLOv8n                       |
-| Tracking         | [tetrack](https://github.com/tracky/tetrack)                      |
+| Tracking         | bytetrack                     |
 | Embedding DB     | Qdrant (Vector Database)      |
 | Backend API      | Django                        |
 | Admin Dashboard  | React.js                      |
