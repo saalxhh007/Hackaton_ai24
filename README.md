@@ -1,5 +1,5 @@
 
-# 🎯 Real-Time Face Recognition and Entry/Exit Detection System
+# 🎯 Real-Time Face Recognition and Person Tracking System
 
 A computer vision-based system that detects and recognizes individuals. It uses face recognition to identify individuals, and real-time tracking to monitor movement.
 
