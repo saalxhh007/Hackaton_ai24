@@ -32,7 +32,6 @@ A computer vision-based system that detects and recognizes individuals. It uses 
 1. **Person Detection**: Detect people using YOLOv8n and assign temporary IDs.
 2. **Face Recognition**: Detect and recognize faces using InsightFace and compare with known embeddings stored in Qdrant.
 3. **Tracking**: Continuously track individuals using tetrack.
-4. **Entry/Exit Detection**: Determine movement across a defined doorway line.
 5. **Logging**: Record events including identity, time, and entry/exit direction.
 
 ---
@@ -116,15 +115,7 @@ cd Trakking-server
 py main.py
 ```
 
-The system will now begin tracking, recognizing faces, and logging entry/exit events in real time.
-
----
-
-## 📸 Screenshots / Demo (Optional)
-
-*Add GIFs or screenshots here to show the system in action.*
-
----
+The system will now begin tracking and recognizing faces real time.
 
 ## 📂 Folder Structure (Optional)
 ```
@@ -141,4 +132,5 @@ project-root/
 ## 🧠 Future Improvements
 
 - WebSocket-based real-time updates on the dashboard
+- Room entry/exit detection and logging
 - Admin roles & authentication
